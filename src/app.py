@@ -25,6 +25,7 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+#1/ALL MEMBERS
 @app.route('/members', methods=['GET'])
 def handle_hello():
 
@@ -35,8 +36,77 @@ def handle_hello():
         "family": members
     }
 
+    return jsonify(response_body), 200
+
+# 2/ONE MEMBER
+@app.route('/member/<int:member_id>', methods=['GET'])
+def handle_member(member_id):
+
+    member = jackson_family.get_member(member_id)
+
+    if member:
+        response_body = {
+            "member": member
+        }
+        return jsonify(response_body), 200
+    else:
+        response_body = {
+            "error": "Member not found"
+        }
+        return jsonify(response_body), 404
+
+#3/CREATE ONE MEMBER
+@app.route('/members/', methods=['POST'])
+def handle_create():
+    
+    request_body = request.get_json(force=True)
+    if "first_name" not in request_body or "age" not in request_body or "lucky_numbers" not in request_body:
+        response_body = {
+            "error": "Incomplete data"
+        }
+        return jsonify(response_body), 400
+    else:
+        jackson_family.add_member(request_body)
+
+    response_body = {
+        "msg": "Member created"
+    }
 
     return jsonify(response_body), 200
+
+
+#4/ DELETE ONE MEMBER
+@app.route('/delete/<int:member_id>', methods=['DELETE'])
+def handle_delete(member_id):
+
+    if jackson_family.delete_member(member_id):
+        response_body = {
+            "msg": "Member deleted"
+        }
+        return jsonify(response_body), 200
+    else:
+        response_body = {
+            "error": "Member not found"
+        }
+        return jsonify(response_body), 404
+
+#UPDATE ONE MEMBER
+@app.route('/members/<int:member_id>', methods=['PUT'])
+def update_member(member_id):
+    request_data = request.get_json()
+    updated_member = {
+        "id": member_id,
+        "first_name": request_data["first_name"],
+        "last_name": jackson_family.last_name,
+        "age": request_data["age"],
+        "lucky_numbers": request_data["lucky_numbers"]
+    }
+    if jackson_family.update_member(member_id, updated_member):
+        return jsonify({"message": "Member updated successfully"}), 200
+    else:
+        return jsonify({"message": "Member not found"}), 404
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
